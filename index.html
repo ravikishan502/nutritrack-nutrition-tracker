@@ -1,1 +1,926 @@
-<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>NutriTrack</title><link rel="stylesheet" href="style.css"></head><body><div class="app"><aside><div class="brand"><b>N</b><div><strong>NutriTrack</strong><small>Nutrition Tracker</small></div></div><nav><a href="#dashboard">Dashboard</a><a href="#profile">Profile</a><a href="#meals">Food & Meals</a><a href="#activity">Activity</a><a href="#weight">Weight</a></nav></aside><main><header><div><small>PERSONAL NUTRITION TRACKER</small><h1>Today's Dashboard</h1><p>Track meals, nutrition, activity and weight.</p></div><label>Date<input id="selectedDate" type="date"></label></header><section id="profile" class="card"><div class="head"><div><h2>Your Profile</h2><p>Every user can enter their own details.</p></div></div><form id="profileForm" class="grid"><label>Age<input id="profileAge" type="number" min="1" max="120" required></label><label>Height (cm)<input id="profileHeight" type="number" min="50" max="250" step=".1" required></label><label>Weight (kg)<input id="profileWeight" type="number" min="1" max="300" step=".1" required></label><label>Sex<select id="profileSex" required><option value="">Select</option><option value="male">Male</option><option value="female">Female</option></select></label><label>Activity<select id="activityLevel"><option value="sedentary">Sedentary</option><option value="light">Lightly active</option><option value="moderate" selected>Moderately active</option><option value="very">Very active</option></select></label><button class="primary" type="submit">Save Profile</button></form><div class="profile"><div><span>Age</span><b id="displayAge">—</b><small>years</small></div><div><span>Height</span><b id="displayHeight">—</b><small>cm</small></div><div><span>Weight</span><b id="displayWeight">—</b><small>kg</small></div><div><span>Sex</span><b id="displaySex">—</b><small>profile</small></div><div><span>Energy reference</span><b id="displayCalorieReference">—</b><small>kcal/day estimate</small></div></div></section><section id="dashboard"><div class="head"><div><h2>Nutrition Overview</h2><p>Achieved vs your configured daily goals.</p></div></div><div id="dailySummary" class="summary"></div><div id="nutrientGrid" class="nutrients"></div></section><section id="meals" class="card"><div class="head"><div><h2>Food & Meals</h2><p>Add a food and its nutrition values.</p></div></div><form id="foodForm" class="foodgrid"><label>Meal<select id="meal"><option>Breakfast</option><option>Lunch</option><option>Snack</option><option>Dinner</option><option>Other</option></select></label><label>Food / Ingredient<input id="foodName" required placeholder="e.g. Oats"></label><label>Quantity<input id="quantity" type="number" min=".1" step=".1" required></label><label>Unit<select id="unit"><option>g</option><option>ml</option><option>piece</option><option>serving</option></select></label><label>Calories<input id="calories" type="number" min="0" step=".1" required></label><label>Protein (g)<input id="protein" type="number" min="0" step=".1" value="0"></label><label>Carbs (g)<input id="carbs" type="number" min="0" step=".1" value="0"></label><label>Fat (g)<input id="fat" type="number" min="0" step=".1" value="0"></label><label>Fiber (g)<input id="fiber" type="number" min="0" step=".1" value="0"></label><label>Calcium (mg)<input id="calcium" type="number" min="0" step=".1" value="0"></label><label>Magnesium (mg)<input id="magnesium" type="number" min="0" step=".1" value="0"></label><label>Iron (mg)<input id="iron" type="number" min="0" step=".1" value="0"></label><label>Potassium (mg)<input id="potassium" type="number" min="0" step=".1" value="0"></label><label>Vitamin C (mg)<input id="vitaminC" type="number" min="0" step=".1" value="0"></label><label>Vitamin B12 (µg)<input id="vitaminB12" type="number" min="0" step=".01" value="0"></label><label>Vitamin D (µg)<input id="vitaminD" type="number" min="0" step=".01" value="0"></label><label>Omega-3 (mg)<input id="omega3" type="number" min="0" step=".1" value="0"></label><button class="primary" type="submit">+ Add Food</button><button id="clearFood" class="secondary" type="button">Clear</button></form><div id="mealList" class="meals"></div></section><div class="two"><section id="activity" class="card"><div class="head"><div><h2>Activity</h2><p>Record movement.</p></div></div><form id="activityForm" class="compact"><label>Steps<input id="steps" type="number" min="0"></label><label>Activity<select id="activityType"><option>Walking</option><option>Running</option><option>Cycling</option><option>Treadmill</option><option>Weight training</option><option>Sports</option><option>Other</option></select></label><label>Duration (min)<input id="duration" type="number" min="0"></label><label>Distance (km)<input id="distance" type="number" min="0" step=".1"></label><button class="primary" type="submit">Save Activity</button></form><div id="activityList"></div></section><section id="weight" class="card"><div class="head"><div><h2>Weight</h2><p>Save weight for the selected date.</p></div></div><form id="weightForm" class="compact"><label>Weight (kg)<input id="weightInput" type="number" min="1" max="300" step=".1" required></label><label>Note<input id="weightNote" placeholder="Optional note"></label><button class="primary" type="submit">Save Weight</button></form><div id="weightHistory"></div></section></div><footer>NutriTrack • Starter version • Data stored in this browser</footer></main></div><script src="script.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NutriTrack - Nutrition Tracker</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div id="toast" class="toast" aria-live="polite"></div>
+
+<header class="topbar">
+    <div class="brand">
+        <span class="brand-icon">🥗</span>
+        <div>
+            <h1>NutriTrack</h1>
+            <p>Personal Nutrition Tracker</p>
+        </div>
+    </div>
+
+    <div class="date-navigation">
+        <button type="button" onclick="changeSelectedDate(-1)">‹</button>
+        <div class="date-box">
+            <span>Selected Date</span>
+            <strong id="currentDate">--</strong>
+        </div>
+        <button type="button" onclick="changeSelectedDate(1)">›</button>
+        <button type="button" onclick="goToToday()">Today</button>
+    </div>
+</header>
+
+<main class="container">
+
+<!-- DAILY CONTROL -->
+<section class="daily-control card">
+    <div>
+        <span class="eyebrow">DAILY TRACKER</span>
+        <h2 id="selectedDateTitle">Today's Overview</h2>
+        <p id="selectedDateSubtitle">Track your nutrition, water, activity and workout.</p>
+    </div>
+
+    <div class="date-picker-wrap">
+        <label for="datePicker">Select Date</label>
+        <input type="date" id="datePicker" onchange="selectDateFromPicker()">
+    </div>
+</section>
+
+<!-- PROFILE -->
+<section class="profile-card">
+    <div class="section-title">
+        <div>
+            <span class="eyebrow">PROFILE</span>
+            <h2>👤 My Profile</h2>
+            <p>Set your personal body and nutrition information</p>
+        </div>
+    </div>
+
+    <div class="profile-grid">
+
+        <div>
+            <label>Name</label>
+            <input id="userName" type="text" placeholder="Enter your name">
+        </div>
+
+        <div>
+            <label>Age</label>
+            <input id="age" type="number" min="1" max="120" placeholder="Age">
+        </div>
+
+        <div>
+            <label>Gender</label>
+            <select id="gender">
+                <option value="">Select Gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+            </select>
+        </div>
+
+        <div>
+            <label>Height</label>
+            <input id="height" type="number" min="1" step="0.1" placeholder="Height (cm)">
+        </div>
+
+        <div>
+            <label>Current Weight</label>
+            <input id="currentWeight" type="number" min="0" step="0.1" placeholder="Current Weight (kg)">
+        </div>
+
+        <div>
+            <label>Target Weight</label>
+            <input id="weightGoal" type="number" min="0" step="0.1" placeholder="Target Weight (kg)">
+        </div>
+
+        <div>
+            <label>Goal</label>
+            <select id="goal">
+                <option value="loss">Fat Loss</option>
+                <option value="maintain">Maintain Weight</option>
+                <option value="gain">Weight Gain</option>
+            </select>
+        </div>
+
+        <div>
+            <label>Daily Activity Level</label>
+            <select id="activityLevel">
+                <option value="1.2">Sedentary — Little / No Exercise</option>
+                <option value="1.375">Light Activity — 1–3 days/week</option>
+                <option value="1.55">Moderate Activity — 3–5 days/week</option>
+                <option value="1.725">Very Active — 6–7 days/week</option>
+                <option value="1.9">Extra Active — Very Hard Training</option>
+            </select>
+        </div>
+
+        <div class="profile-save-area">
+            <button type="button" onclick="saveProfile()">✓ Save Profile</button>
+        </div>
+
+    </div>
+</section>
+
+<!-- BODY ANALYSIS -->
+<section class="card">
+    <div class="section-title">
+        <div>
+            <span class="eyebrow">HEALTH ANALYSIS</span>
+            <h2>📊 Body & Calorie Analysis</h2>
+            <p>Check your BMI, BMR and estimated daily calorie burn</p>
+        </div>
+    </div>
+
+    <div class="health-analysis-grid">
+
+        <div class="analysis-card">
+            <div class="analysis-icon">⚖️</div>
+            <h3>BMI</h3>
+            <strong id="bmiValue">--</strong>
+            <p id="bmiCategory">Enter your profile information</p>
+        </div>
+
+        <div class="analysis-card">
+            <div class="analysis-icon">🔥</div>
+            <h3>BMR</h3>
+            <strong><span id="bmrValue">--</span> <small>kcal/day</small></strong>
+            <p>Estimated calories burned at rest</p>
+        </div>
+
+        <div class="analysis-card">
+            <div class="analysis-icon">🏃</div>
+            <h3>Daily Calorie Burn</h3>
+            <strong><span id="tdeeValue">--</span> <small>kcal/day</small></strong>
+            <p>Estimated daily energy expenditure</p>
+        </div>
+
+    </div>
+
+    <div class="calculator-box">
+        <h3>🧮 BMR & Calorie Calculator</h3>
+        <p>Select your activity level to estimate your daily calorie requirement.</p>
+
+        <div class="activity-calculator">
+            <div>
+                <label>Activity Level</label>
+                <select id="calculatorActivity" onchange="calculateHealthMetrics()">
+                    <option value="1.2">Sedentary — Little / No Exercise</option>
+                    <option value="1.375">Light Activity — 1–3 days/week</option>
+                    <option value="1.55">Moderate Activity — 3–5 days/week</option>
+                    <option value="1.725">Very Active — 6–7 days/week</option>
+                    <option value="1.9">Extra Active — Very Hard Training</option>
+                </select>
+            </div>
+
+            <button type="button" onclick="calculateHealthMetrics()">Calculate</button>
+        </div>
+
+        <div class="calorie-breakdown">
+            <div>
+                <span>BMR</span>
+                <strong id="calculatorBMR">-- kcal</strong>
+            </div>
+            <div>
+                <span>Activity Multiplier</span>
+                <strong id="activityMultiplier">--</strong>
+            </div>
+            <div>
+                <span>Estimated Daily Burn</span>
+                <strong id="calculatorTDEE">-- kcal</strong>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- NUTRITION SUMMARY -->
+<section>
+    <div class="section-title">
+        <div>
+            <span class="eyebrow">DAILY NUTRITION</span>
+            <h2>Today's Nutrition</h2>
+            <p id="nutritionDateText">Your daily nutrition overview</p>
+        </div>
+    </div>
+
+    <div class="summary-grid">
+
+        <div class="summary-card calories">
+            <div class="summary-icon">🔥</div>
+            <h3>Calories</h3>
+            <strong><span id="totalCalories">0</span></strong>
+            <span class="target">/ <span id="calorieTarget">2200</span> kcal</span>
+            <div class="progress"><div id="calorieProgress"></div></div>
+            <div class="summary-extra">
+                <span>Difference</span>
+                <strong id="calorieDifference">0 kcal</strong>
+            </div>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-icon">🥩</div>
+            <h3>Protein</h3>
+            <strong><span id="totalProtein">0</span>g</strong>
+            <span class="target">/ <span id="proteinTarget">120</span>g</span>
+            <div class="progress"><div id="proteinProgress"></div></div>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-icon">🍚</div>
+            <h3>Carbs</h3>
+            <strong><span id="totalCarbs">0</span>g</strong>
+            <span class="target">/ 250g</span>
+            <div class="progress"><div id="carbProgress"></div></div>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-icon">🥑</div>
+            <h3>Fat</h3>
+            <strong><span id="totalFat">0</span>g</strong>
+            <span class="target">/ 70g</span>
+            <div class="progress"><div id="fatProgress"></div></div>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-icon">🌾</div>
+            <h3>Fiber</h3>
+            <strong><span id="totalFiber">0</span>g</strong>
+            <span class="target">/ 30g</span>
+            <div class="progress"><div id="fiberProgress"></div></div>
+        </div>
+
+    </div>
+</section>
+
+<!-- CALORIE BALANCE -->
+<section class="card calorie-status-card">
+    <div class="section-title">
+        <div>
+            <span class="eyebrow">DAILY STATUS</span>
+            <h2>🔥 Calorie Balance</h2>
+            <p>Compare your intake with your estimated daily requirement.</p>
+        </div>
+    </div>
+
+    <div class="calorie-status-grid">
+
+        <div>
+            <span>Calories Consumed</span>
+            <strong id="statusCaloriesConsumed">0 kcal</strong>
+        </div>
+
+        <div>
+            <span>Daily Target</span>
+            <strong id="statusCaloriesTarget">0 kcal</strong>
+        </div>
+
+        <div>
+            <span>Deficit / Surplus</span>
+            <strong id="statusCaloriesDifference">0 kcal</strong>
+        </div>
+
+    </div>
+</section>
+
+<!-- ADD FOOD -->
+<section class="card">
+    <div class="section-title">
+        <div>
+            <span class="eyebrow">FOOD LOG</span>
+            <h2>🍽️ Add Food</h2>
+            <p>Add food to your selected day's meals</p>
+        </div>
+    </div>
+
+    <div class="food-form">
+
+        <input id="foodName" type="text" placeholder="Food name">
+
+        <select id="mealType">
+            <option value="Breakfast">🌅 Breakfast</option>
+            <option value="Morning Snack">🍎 Morning Snack</option>
+            <option value="Lunch">🍛 Lunch</option>
+            <option value="Pre Workout">🏋️ Pre Workout</option>
+            <option value="Post Workout">🥤 Post Workout</option>
+            <option value="Evening Snack">☕ Evening Snack</option>
+            <option value="Dinner">🌙 Dinner</option>
+        </select>
+
+        <input id="foodQuantity" type="number" min="0" step="0.1" placeholder="Quantity (g/ml/piece)">
+        <input id="foodCalories" type="number" min="0" step="0.1" placeholder="Calories">
+        <input id="foodProtein" type="number" min="0" step="0.1" placeholder="Protein (g)">
+        <input id="foodCarbs" type="number" min="0" step="0.1" placeholder="Carbs (g)">
+        <input id="foodFat" type="number" min="0" step="0.1" placeholder="Fat (g)">
+        <input id="foodFiber" type="number" min="0" step="0.1" placeholder="Fiber (g)">
+
+        <button type="button" onclick="addFood()">+ Add Food</button>
+
+    </div>
+</section>
+
+<!-- MEALS -->
+<section class="meals-section">
+
+    <div class="meal-card">
+        <div class="meal-header">
+            <div><span class="meal-icon">🌅</span><h2>Breakfast</h2></div>
+            <span id="BreakfastTotal" class="meal-total">0 kcal</span>
+        </div>
+        <div id="Breakfast"><p class="food-info">No food added yet.</p></div>
+    </div>
+
+    <div class="meal-card">
+        <div class="meal-header">
+            <div><span class="meal-icon">🍎</span><h2>Morning Snack</h2></div>
+            <span id="MorningSnackTotal" class="meal-total">0 kcal</span>
+        </div>
+        <div id="MorningSnack"><p class="food-info">No food added yet.</p></div>
+    </div>
+
+    <div class="meal-card">
+        <div class="meal-header">
+            <div><span class="meal-icon">🍛</span><h2>Lunch</h2></div>
+            <span id="LunchTotal" class="meal-total">0 kcal</span>
+        </div>
+        <div id="Lunch"><p class="food-info">No food added yet.</p></div>
+    </div>
+
+    <div class="meal-card">
+        <div class="meal-header">
+            <div><span class="meal-icon">🏋️</span><h2>Pre Workout</h2></div>
+            <span id="PreWorkoutTotal" class="meal-total">0 kcal</span>
+        </div>
+        <div id="PreWorkout"><p class="food-info">No food added yet.</p></div>
+    </div>
+
+    <div class="meal-card">
+        <div class="meal-header">
+            <div><span class="meal-icon">🥤</span><h2>Post Workout</h2></div>
+            <span id="PostWorkoutTotal" class="meal-total">0 kcal</span>
+        </div>
+        <div id="PostWorkout"><p class="food-info">No food added yet.</p></div>
+    </div>
+
+    <div class="meal-card">
+        <div class="meal-header">
+            <div><span class="meal-icon">☕</span><h2>Evening Snack</h2></div>
+            <span id="EveningSnackTotal" class="meal-total">0 kcal</span>
+        </div>
+        <div id="EveningSnack"><p class="food-info">No food added yet.</p></div>
+    </div>
+
+    <div class="meal-card">
+        <div class="meal-header">
+            <div><span class="meal-icon">🌙</span><h2>Dinner</h2></div>
+            <span id="DinnerTotal" class="meal-total">0 kcal</span>
+        </div>
+        <div id="Dinner"><p class="food-info">No food added yet.</p></div>
+    </div>
+
+</section>
+
+<!-- MICRONUTRIENTS PART 1 -->
+<section class="card">
+    <div class="section-title">
+        <div>
+            <span class="eyebrow">MICRONUTRIENTS</span>
+            <h2>🧬 Micronutrient Tracker</h2>
+            <p>Manually enter your daily vitamins and minerals.</p>
+        </div>
+    </div>
+
+    <div class="micro-info-box">
+        <strong>Daily requirements are estimated from your profile.</strong>
+        <span>You can manually record how much you consumed.</span>
+    </div>
+
+    <div class="micro-grid">
+
+        <div class="micro-card">
+            <div class="micro-card-header">
+                <span>🥛 Calcium</span>
+                <strong id="calcium">0 mg</strong>
+            </div>
+            <div class="micro-input-row">
+                <input id="calciumInput" type="number" min="0" step="0.1" placeholder="Consumed">
+                <span>mg</span>
+            </div>
+            <div class="micro-target"><span>Daily target</span><strong id="calciumTarget">-- mg</strong></div>
+            <div class="progress"><div id="calciumProgress"></div></div>
+        </div>
+
+        <div class="micro-card">
+            <div class="micro-card-header">
+                <span>⚡ Magnesium</span>
+                <strong id="magnesium">0 mg</strong>
+            </div>
+            <div class="micro-input-row">
+                <input id="magnesiumInput" type="number" min="0" step="0.1" placeholder="Consumed">
+                <span>mg</span>
+            </div>
+            <div class="micro-target"><span>Daily target</span><strong id="magnesiumTarget">-- mg</strong></div>
+            <div class="progress"><div id="magnesiumProgress"></div></div>
+        </div>
+
+        <div class="micro-card">
+            <div class="micro-card-header">
+                <span>🩸 Iron</span>
+                <strong id="iron">0 mg</strong>
+            </div>
+            <div class="micro-input-row">
+                <input id="ironInput" type="number" min="0" step="0.1" placeholder="Consumed">
+                <span>mg</span>
+            </div>
+            <div class="micro-target"><span>Daily target</span><strong id="ironTarget">-- mg</strong></div>
+            <div class="progress"><div id="ironProgress"></div></div>
+        </div>
+
+        <div class="micro-card">
+            <div class="micro-card-header">
+                <span>🧂 Sodium</span>
+                <strong id="sodium">0 mg</strong>
+            </div>
+            <div class="micro-input-row">
+                <input id="sodiumInput" type="number" min="0" step="0.1" placeholder="Consumed">
+                <span>mg</span>
+            </div>
+            <div class="micro-target"><span>Daily target</span><strong id="sodiumTarget">-- mg</strong></div>
+            <div class="progress"><div id="sodiumProgress"></div></div>
+        </div>
+
+        <div class="micro-card">
+            <div class="micro-card-header">
+                <span>🦴 Potassium</span>
+                <strong id="potassium">0 mg</strong>
+            </div>
+            <div class="micro-input-row">
+                <input id="potassiumInput" type="number" min="0" step="0.1" placeholder="Consumed">
+                <span>mg</span>
+            </div>
+            <div class="micro-target"><span>Daily target</span><strong id="potassiumTarget">-- mg</strong></div>
+            <div class="progress"><div id="potassiumProgress"></div></div>
+        </div>
+
+        <div class="micro-card">
+            <div class="micro-card-header">
+                <span>🔩 Zinc</span>
+                <strong id="zinc">0 mg</strong>
+            </div>
+            <div class="micro-input-row">
+                <input id="zincInput" type="number" min="0" step="0.1" placeholder="Consumed">
+                <span>mg</span>
+            </div>
+            <div class="micro-target"><span>Daily target</span><strong id="zincTarget">-- mg</strong></div>
+            <div class="progress"><div id="zincProgress"></div></div>
+        </div>
+
+    </div>
+    <!-- MICRONUTRIENTS PART 2 -->
+
+    <div class="micro-grid">
+
+        <div class="micro-card">
+            <div class="micro-card-header">
+                <span>🍊 Vitamin C</span>
+                <strong id="vitaminC">0 mg</strong>
+            </div>
+            <div class="micro-input-row">
+                <input id="vitaminCInput" type="number" min="0" step="0.1" placeholder="Consumed">
+                <span>mg</span>
+            </div>
+            <div class="micro-target">
+                <span>Daily target</span>
+                <strong id="vitaminCTarget">-- mg</strong>
+            </div>
+            <div class="progress"><div id="vitaminCProgress"></div></div>
+        </div>
+
+        <div class="micro-card">
+            <div class="micro-card-header">
+                <span>☀️ Vitamin D</span>
+                <strong id="vitaminD">0 mcg</strong>
+            </div>
+            <div class="micro-input-row">
+                <input id="vitaminDInput" type="number" min="0" step="0.1" placeholder="Consumed">
+                <span>mcg</span>
+            </div>
+            <div class="micro-target">
+                <span>Daily target</span>
+                <strong id="vitaminDTarget">-- mcg</strong>
+            </div>
+            <div class="progress"><div id="vitaminDProgress"></div></div>
+        </div>
+
+        <div class="micro-card">
+            <div class="micro-card-header">
+                <span>🐟 Omega-3</span>
+                <strong id="omega3">0 mg</strong>
+            </div>
+            <div class="micro-input-row">
+                <input id="omega3Input" type="number" min="0" step="0.1" placeholder="Consumed">
+                <span>mg</span>
+            </div>
+            <div class="micro-target">
+                <span>Daily target</span>
+                <strong id="omega3Target">-- mg</strong>
+            </div>
+            <div class="progress"><div id="omega3Progress"></div></div>
+        </div>
+
+    </div>
+
+    <div class="micro-save-row">
+        <button type="button" onclick="saveMicronutrients()">✓ Save Micronutrients</button>
+        <button type="button" class="secondary-btn" onclick="resetMicronutrients()">Reset</button>
+    </div>
+</section>
+
+
+<!-- WATER -->
+<section class="card">
+    <div class="section-title">
+        <div>
+            <span class="eyebrow">HYDRATION</span>
+            <h2>💧 Water Tracker</h2>
+            <p>Water data is saved separately for every selected date.</p>
+        </div>
+    </div>
+
+    <div class="water-box">
+
+        <div class="water-number">
+            <strong id="waterAmount">0</strong>
+            <span>/ <span id="waterTarget">3000</span> ml</span>
+        </div>
+
+        <div class="progress large">
+            <div id="waterProgress"></div>
+        </div>
+
+        <div class="water-buttons">
+            <button type="button" onclick="addWater(250)">+250 ml</button>
+            <button type="button" onclick="addWater(500)">+500 ml</button>
+            <button type="button" onclick="addWater(750)">+750 ml</button>
+            <button type="button" onclick="resetWater()">Reset</button>
+        </div>
+
+    </div>
+</section>
+
+
+<!-- WEIGHT TRACKER -->
+<section class="card">
+    <div class="section-title">
+        <div>
+            <span class="eyebrow">WEIGHT</span>
+            <h2>⚖️ Weight Tracker</h2>
+            <p>Record your weight and follow your progress.</p>
+        </div>
+    </div>
+
+    <div class="weight-form">
+        <div>
+            <label>Weight</label>
+            <input id="weightInput" type="number" min="0" step="0.1" placeholder="Weight (kg)">
+        </div>
+
+        <div>
+            <label>Time</label>
+            <select id="weightTime">
+                <option value="Morning">Morning</option>
+                <option value="Afternoon">Afternoon</option>
+                <option value="Evening">Evening</option>
+                <option value="Night">Night</option>
+            </select>
+        </div>
+
+        <button type="button" onclick="addWeight()">+ Add Weight</button>
+    </div>
+
+    <div class="weight-summary">
+
+        <div>
+            <span>Morning</span>
+            <strong id="morningWeight">--</strong>
+        </div>
+
+        <div>
+            <span>Evening</span>
+            <strong id="eveningWeight">--</strong>
+        </div>
+
+        <div>
+            <span>Latest</span>
+            <strong id="latestWeight">--</strong>
+        </div>
+
+    </div>
+
+    <div class="weight-history">
+        <h3>Weight History</h3>
+        <div id="weightHistory">
+            <p class="food-info">No weight records yet.</p>
+        </div>
+    </div>
+</section>
+
+
+<!-- ACTIVITY -->
+<section class="card">
+    <div class="section-title">
+        <div>
+            <span class="eyebrow">DAILY ACTIVITY</span>
+            <h2>🚶 Activity Tracker</h2>
+            <p>Record your daily steps, walking and workout.</p>
+        </div>
+    </div>
+
+    <div class="activity-grid">
+
+        <div>
+            <label>Steps</label>
+            <input id="steps" type="number" min="0" placeholder="Steps">
+        </div>
+
+        <div>
+            <label>Walking / Cardio (minutes)</label>
+            <input id="walking" type="number" min="0" placeholder="Minutes">
+        </div>
+
+        <div>
+            <label>Workout (minutes)</label>
+            <input id="workout" type="number" min="0" placeholder="Minutes">
+        </div>
+
+    </div>
+
+    <button type="button" onclick="saveActivity()">✓ Save Activity</button>
+</section>
+
+
+<!-- WORKOUT EXERCISE LOG -->
+<section class="card">
+    <div class="section-title">
+        <div>
+            <span class="eyebrow">WORKOUT LOG</span>
+            <h2>🏋️ Today's Exercises</h2>
+            <p>Save the exercises you performed so you can remember them next week.</p>
+        </div>
+    </div>
+
+    <div class="exercise-form">
+
+        <select id="exerciseBodyPart">
+            <option value="Cardio">Cardio</option>
+            <option value="Chest">Chest</option>
+            <option value="Back">Back</option>
+            <option value="Shoulder">Shoulder</option>
+            <option value="Biceps">Biceps</option>
+            <option value="Triceps">Triceps</option>
+            <option value="Legs">Legs</option>
+            <option value="Abs">Abs</option>
+            <option value="Full Body">Full Body</option>
+        </select>
+
+        <input id="exerciseName" type="text" placeholder="Exercise name">
+
+        <input id="exerciseSets" type="number" min="0" placeholder="Sets">
+
+        <input id="exerciseReps" type="text" placeholder="Reps / Time">
+
+        <button type="button" onclick="addExercise()">+ Add Exercise</button>
+
+    </div>
+
+    <div class="exercise-list" id="exerciseList">
+        <p class="food-info">No exercises added for this date.</p>
+    </div>
+</section>
+
+
+<!-- GOAL -->
+<section class="card">
+    <div class="section-title">
+        <div>
+            <span class="eyebrow">GOAL PROGRESS</span>
+            <h2>🎯 Weight Goal</h2>
+            <p>Track your progress towards your target weight.</p>
+        </div>
+    </div>
+
+    <div class="goal-box">
+
+        <div>
+            <span>Current Weight</span>
+            <strong id="goalCurrentWeight">--</strong>
+        </div>
+
+        <div>
+            <span>Target Weight</span>
+            <strong id="goalTargetWeight">--</strong>
+        </div>
+
+        <div>
+            <span>Goal Progress</span>
+            <strong id="goalProgressText">0%</strong>
+        </div>
+
+    </div>
+
+    <div class="progress large">
+        <div id="goalProgress"></div>
+    </div>
+</section>
+
+
+<!-- DAILY REPORT -->
+<section class="card">
+    <div class="section-title">
+        <div>
+            <span class="eyebrow">REPORT</span>
+            <h2>📋 Daily Report</h2>
+            <p>View and print the selected day's complete report.</p>
+        </div>
+
+        <button type="button" onclick="printDailyReport()">🖨️ Print Daily</button>
+    </div>
+
+    <div class="report-grid">
+
+        <div>
+            <span>Date</span>
+            <strong id="reportDate">--</strong>
+        </div>
+
+        <div>
+            <span>Calories</span>
+            <strong id="reportCalories">0 kcal</strong>
+        </div>
+
+        <div>
+            <span>Protein</span>
+            <strong id="reportProtein">0 g</strong>
+        </div>
+
+        <div>
+            <span>Carbs</span>
+            <strong id="reportCarbs">0 g</strong>
+        </div>
+
+        <div>
+            <span>Fat</span>
+            <strong id="reportFat">0 g</strong>
+        </div>
+
+        <div>
+            <span>Water</span>
+            <strong id="reportWater">0 ml</strong>
+        </div>
+
+        <div>
+            <span>Steps</span>
+            <strong id="reportSteps">0</strong>
+        </div>
+
+        <div>
+            <span>Calorie Balance</span>
+            <strong id="reportBalance">0 kcal</strong>
+        </div>
+
+    </div>
+</section>
+
+
+<!-- HISTORY -->
+<section class="card">
+    <div class="section-title">
+        <div>
+            <span class="eyebrow">HISTORY</span>
+            <h2>📅 Nutrition History</h2>
+            <p>Check previous days and compare your nutrition.</p>
+        </div>
+    </div>
+
+    <div class="history-controls">
+
+        <button type="button" onclick="showPreviousDay()">← Previous Day</button>
+
+        <input type="date" id="historyDate" onchange="viewHistoryDate()">
+
+        <button type="button" onclick="showNextDay()">Next Day →</button>
+
+        <button type="button" onclick="goToToday()">Today</button>
+
+    </div>
+
+    <div class="history-summary" id="historySummary">
+        <p class="food-info">Select a date to view history.</p>
+    </div>
+</section>
+
+
+<!-- WEEKLY REPORT -->
+<section class="card">
+    <div class="section-title">
+        <div>
+            <span class="eyebrow">7 DAY REPORT</span>
+            <h2>📈 Weekly Progress</h2>
+            <p>Compare calories, weight and activity over the last 7 days.</p>
+        </div>
+
+        <button type="button" onclick="printWeeklyReport()">🖨️ Print Weekly</button>
+    </div>
+
+    <div class="weekly-stats">
+
+        <div>
+            <span>Average Calories</span>
+            <strong id="weeklyAverageCalories">0 kcal</strong>
+        </div>
+
+        <div>
+            <span>Total Deficit / Surplus</span>
+            <strong id="weeklyBalance">0 kcal</strong>
+        </div>
+
+        <div>
+            <span>Average Protein</span>
+            <strong id="weeklyAverageProtein">0 g</strong>
+        </div>
+
+        <div>
+            <span>Weight Change</span>
+            <strong id="weeklyWeightChange">--</strong>
+        </div>
+
+    </div>
+
+    <div class="chart-container">
+        <canvas id="weeklyCaloriesChart"></canvas>
+    </div>
+
+    <div class="weekly-table-wrap">
+        <table class="weekly-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Calories</th>
+                    <th>Target</th>
+                    <th>Balance</th>
+                    <th>Protein</th>
+                    <th>Water</th>
+                    <th>Weight</th>
+                </tr>
+            </thead>
+
+            <tbody id="weeklyTableBody"></tbody>
+        </table>
+    </div>
+</section>
+
+
+<!-- DATA EXPORT -->
+<section class="card">
+    <div class="section-title">
+        <div>
+            <span class="eyebrow">DATA</span>
+            <h2>💾 Data Backup & Export</h2>
+            <p>Download your NutriTrack data for backup or sharing.</p>
+        </div>
+    </div>
+
+    <div class="data-actions">
+        <button type="button" onclick="exportData()">⬇️ Export Data</button>
+        <button type="button" onclick="importData()">⬆️ Import Data</button>
+        <button type="button" onclick="printDailyReport()">🖨️ Print Daily Report</button>
+        <button type="button" onclick="printWeeklyReport()">🖨️ Print Weekly Report</button>
+    </div>
+
+    <input id="importFile" type="file" accept=".json" hidden onchange="handleImportFile(event)">
+
+    <p class="data-note">
+        Exported JSON file can be kept as a backup and imported later.
+    </p>
+</section>
+
+
+<!-- RESET -->
+<section class="danger-zone">
+    <button type="button" onclick="resetToday()">Reset Selected Day</button>
+</section>
+
+</main>
+
+
+<footer>
+    <p>NutriTrack • Personal Nutrition Tracker</p>
+    <p>Track • Learn • Improve</p>
+</footer>
+
+
+<!-- PRINT AREA -->
+<div id="printArea"></div>
+
+
+<script src="script.js"></script>
+
+</body>
+</html>
